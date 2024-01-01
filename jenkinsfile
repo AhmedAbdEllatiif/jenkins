@@ -11,7 +11,7 @@ pipeline{
     agent any 
 
     tools {
-         nodejs "Node 21.5.0"
+        nodejs "Node 21.5.0"
     }
 
     stages{
@@ -21,11 +21,8 @@ pipeline{
         stage("Init image tag") {
             steps{
                 script {
-                    dir ('push-docker-image') {
-                        IMAGE_TAG = load ("main.groovy").lastCommitId()
-                    }
+                    IMAGE_TAG = load ("main.groovy").lastCommitId()
                 }
-                
             }
         }
 
@@ -34,11 +31,8 @@ pipeline{
         stage("Install Dependencies"){
             steps{
                 script {
-                    dir ('push-docker-image') {
-                        sh 'npm install'
-                    }
+                    sh 'npm install'
                 }
-                
             }
         }
         
@@ -46,15 +40,12 @@ pipeline{
         stage("Run the app"){
             steps{
                 script {
-                    dir ('push-docker-image') {
-                       sh '''
-                            node app.js & sleep 1
-                            echo $! > .pidfile
-                            kill $(cat .pidfile)
+                    sh '''
+                        node app.js & sleep 1
+                        echo $! > .pidfile
+                        kill $(cat .pidfile)
                         '''
-                    }
                 }
-              
             }
         }
 
@@ -62,11 +53,8 @@ pipeline{
         stage("Build Docker Image"){
             steps{
                 script {
-                    dir ('push-docker-image') {
-                       sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                    }
+                   sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
-              
             }
         }
 
@@ -74,15 +62,14 @@ pipeline{
         stage("Push the Image to the registry"){
             steps{
                 script {
-                      dir ('push-docker-image') {
-                            withCredentials(
-                                [usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                                
+                       withCredentials(
+                                [usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]
+                                ) {
+                        
                                     sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin '
                                 
                                     sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-                            }
-                       }
+                        }
                 }
             }
 
